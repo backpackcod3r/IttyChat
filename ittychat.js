@@ -26,6 +26,7 @@
  * 
  ***************************************************************************/
 
+var util = require('util');
 var net = require('net');
 
 var Clients = {
@@ -128,14 +129,14 @@ var Clients = {
  *   - name: The client's display name.
  *   - connectedAt: When the socket first connected.
  *   - isAuthenticated: True if the client has a name and is in the chat.
- *   - address: The address (IP addr and port) of the client.
+ *   - address: The IP address of the client.
  */
 var Client = function(socket) {
     this.socket = socket;
     this.name = null;
     this.connectedAt = Date.now();
     this.isAuthenticated = false;
-    this.address = socket.address();
+    this.address = socket.remoteAddress;
 };
 
 /*
@@ -151,7 +152,7 @@ Client.prototype.notify = function(msg) {
  */
 Client.prototype.toString = function() {
     return("[name: " + this.name +
-           ", address: " + this.address.address +
+           ", address: " + this.address +
            ", connectedAt: " + this.connectedAt +
            "]");
 };
@@ -183,17 +184,6 @@ Client.prototype.prompt = function() {
 };
 
 IttyChat = {
-
-    /*
-     * Log a message to the console.
-     */
-    log: function(msg) {
-        var now, fmt;
-        now = new Date();
-        fmt = now.getDate() + "/" + now.getMonth() + "/" + now.getFullYear() + " " +
-            now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
-        console.log("[" + fmt + "]: " + msg);
-    },
 
     /*
      * Handle the '.quit' command.
@@ -309,7 +299,7 @@ IttyChat = {
 
         if (rawInput.length > 0) {
 
-            IttyChat.log("[" + client.address.address + "]: " + rawInput);
+            util.log("[" + client.address + "]: " + rawInput);
 
             match = rawInput.match(/^\.(\w*)\s*(.*)/);
 
@@ -341,9 +331,9 @@ IttyChat = {
      * Handle receiving a SIGINT
      */
     sigIntHandler: function () {
-        IttyChat.log('Cleaning up...');
+        util.log('Cleaning up...');
         Clients.notifyAll("System going down RIGHT NOW!\r\n");
-        IttyChat.log('Bye!');
+        util.log('Bye!');
         process.exit(0);
     },
 
@@ -352,25 +342,21 @@ IttyChat = {
      */
     endHandler: function(socket) {
         var client = Clients.findClient(socket);
-        var address = client.address.address;
+        var address = client.address;
         var name = client.name;
-        IttyChat.log("Disconnect from " + client.toString());
+        util.log("Disconnect from " + client.toString());
         if (client.isAuthenticated) {
             Clients.notifyAuthedExcept(client, name + " has left the chat");
         }
         Clients.removeClient(client);
-        IttyChat.log("Disconnect from " + address +
-                     ". (clients: " + Clients.length() + ")");
+        util.log("Disconnect from " + address +
+                 ". (clients: " + Clients.length() + ")");
     },
 
     /*
      * Listen for a new client, and handle it.
      */
     clientListener: function(socket) {
-        // Add the new client. (net.socket.Address() returns an object
-        // holding both the remote IP address and remote port, so multiple
-        // clients from the same IP address should work fine here)
-
         var client, rawInput;
 
         client = new Client(socket);
@@ -378,8 +364,8 @@ IttyChat = {
 
         client.sendWelcome(client);
 
-        IttyChat.log("Connection from " + client.toString() +
-                     " (clients: " + Clients.length() + ")");
+        util.log("Connection from " + client.toString() +
+                 " (clients: " + Clients.length() + ")");
 
         // Handle data sent.
         socket.on('data', function(data) {
@@ -430,7 +416,7 @@ if (port > 1024) {
         server.listen(port);
     }
 
-    console.log("Now listening on port " + port);
+    util.log("Now listening on port " + port);
 } else {
     console.log("Port number must be > 1024");
     process.exit(1);
