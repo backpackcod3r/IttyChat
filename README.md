@@ -1,9 +1,9 @@
 IttyChat
 ========
 
-This is a proof-of-concept simple chat server that accepts Telnet
-connections and drops all connected users into a single "chat
-room". Think IRC, but much, much less useful.
+This is a very simple proof-of-concept chat server that accepts Telnet
+connections and drops all connected users into a single "chat room". Think IRC,
+but much, much less useful.
 
 Running the Server
 ------------------
@@ -19,14 +19,19 @@ the "-l" argument:
 
     % coffee ittychat.coffee -l 3000
 
-This is useful for debugging.
+This is useful for debugging, kicking the tires, etc.
+
+Logging is written to STDOUT, so you'll want to redirect to a log file if
+you're interested in saving it
 
 Using the Chat
 --------------
 
-While a client such as TinyFugue can be used, plain ol' telnet works
-fine. Just telnet to the chat server's address and port, and you're
-connected. All Commands begin with a period.
+Since this is a line-oriented server, a client program such as TinyFugue[1] (or
+equivalent) is highly recommended. It makes the experience much more pleasant!
+Raw telnet works fine in a pinch, however.
+
+All user commands begin with a period, and are summarized below:
 
 ### .who
 
@@ -126,11 +131,11 @@ This is my first attempt at a project in Node.js, so I wanted to do
 something that I found genuinely interesting but simple enough to bite
 off in an evening or weekend. Chat servers are well known problems,
 there's nothing new here, but they are still complex enough to have fun
-with!
+with.
 
 The first implementation was JavaScript, but since I was cutting my
 teeth on new (to me) technologies, I re-wrote it in CoffeeScript and
-killed mtwo birds with one stone.
+killed two birds with one stone.
 
 The JavaScript branch still lives in GitHub, but any new changes
 will bee in CoffeeScript on the master branch.
@@ -159,3 +164,9 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Footnotes
+---------
+
+[1] http://tinyfugue.sourceforge.net/
