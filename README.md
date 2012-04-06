@@ -73,6 +73,29 @@ connected. All Commands begin with a period.
 
   Will change your nickname from your current name to the new name.
 
+Customizing the Server
+---------------------
+
+The following files can be customized:
+
+### welcome.txt
+
+The text in this file is sent to clients when they connect. Normally
+it should include a short bit of help, sysadmin contact information,
+etc.
+
+### motd.txt
+
+This is the "Message of the Day", and is displayed to users after they
+join the chat by using the .connect command. If this file is missing,
+no motd will be shown.
+
+### help.txt
+
+This is the text displayed by the .help command. You probably don't
+need to edit this file unless you hack on the server and add, delete,
+or modify commands.
+
 TODO
 ----
 

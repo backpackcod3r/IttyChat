@@ -27,6 +27,8 @@
 
 util = require 'util'
 net = require 'net'
+fs = require 'fs'
+path = require 'path'
 
 # Add a 'remove' method to array to mask the unpleasantness of
 # splicing
@@ -116,21 +118,38 @@ class Client
 
   # Print a Welcome Message to the client.
   sendWelcome: ->
-    @socket.write "\r\n"
-    @socket.write "--------------------------------------------------------------------------"
-    @socket.write "\r\n"
-    @socket.write "Welcome to IttyChat!\r\n"
-    @socket.write "\r\n\r\n"
-    @socket.write "  To chat, type:              .connect <username>\r\n"
-    @socket.write "  To see who's online, type:  .who'\r\n"
-    @socket.write "  To quit, type:              .quit'\r\n"
-    @socket.write "--------------------------------------------------------------------------"
-    @socket.write "\r\n\r\n"
+    @sendFile "welcome.txt", "Welcome to IttyChat!\r\nPlease configure your welcome message in welcome.txt!"
+
+  # Print the help file
+  sendHelp: ->
+    @sendFile "help.txt", "Help not available"
+
+  # Print the Message of the Day
+  sendMotd: ->
+    @sendFile "motd.txt"
+
+  # Send a local file to output
+  sendFile: (fileName, defaultText) ->
+    # TODO: Clearly, this has huge potential for security issues.
+    #       Make sure that the file we're sending is relative to the
+    #       current working directory, and has no '..' elements.
+    client = this
+    fs.readFile path.join(__dirname, fileName), (err, data) ->
+      if err?
+        if err.code is 'ENOENT'
+          util.log "#{fileName} was requested, but is missing (or unreadable)"
+          client.notify defaultText if defaultText?
+        else
+          raise err
+      else
+        util.log "Sending file #{fileName}"
+        client.notify String(data)
 
   authenticate: (name) ->
     @isAuthenticated = true
     @name = name
     @notify "Welcome to the chat, #{@name}!"
+    @sendMotd()
     Clients.notifyAuthedExcept this, "#{@name} has joined."
 
   # Write a prompt to the client (not currently used)
@@ -150,6 +169,17 @@ IttyChat =
     # Just call end, and let the event handler take care of cleanup.
     client.socket.end()
 
+  #
+  # Handle the 'help' command.
+  #
+  cmdHelp: (client) ->
+    client.sendHelp()
+
+  #
+  # Handle the 'motd' command.
+  #
+  cmdMotd: (client) ->
+    client.sendMotd()
 
   #
   # Handle the 'say' command.
@@ -235,6 +265,7 @@ IttyChat =
       if match?
         command = match[1]
         arg = match[2].trim()
+
         if command.match /^quit/
           IttyChat.cmdQuit client
         else if command.match /^connect/
@@ -245,10 +276,15 @@ IttyChat =
           IttyChat.cmdWho client
         else if command.match /^me/
           IttyChat.cmdMe client, arg
+        else if command.match /^help/
+          IttyChat.cmdHelp client
+        else if command.match /^motd/
+          IttyChat.cmdMotd client
         else if command.match /^say/
           IttyChat.cmdSay client, arg
         else
           client.notify "Huh?"
+
       else
         IttyChat.cmdSay client, rawInput
 
