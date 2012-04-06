@@ -8,16 +8,16 @@ room". Think IRC, but much, much less useful.
 Running the Server
 ==================
 
-Just run with node.js as follows:
+Just run with node.js and CoffeeScript as follows:
 
-  % node ittychat.js 3000
+  % coffee ittychat.coffee 3000
 
 This will start the server listening on port 3000.
 
 If you want to limit the server to listening only on localhost, use
 the "-l" argument:
 
-  % node ittychat.js -l 3000
+  % coffee ittychat.coffee -l 3000
 
 This is useful for debugging.
 
@@ -80,6 +80,8 @@ Commands begin with a period.
 TODO
 ====
 
+* Unit Testing. This really should have come first!
+
 * Deal with idle sockets.
 
 * Deal with chunked input.
@@ -100,12 +102,19 @@ TODO
 Design Philosophy
 =================
 
-My goal with this project, first and foremost, was learning Node.js.
+My goal with this project, first and foremost, was to learn Node.js.
 This is my first attempt at a project in Node.js, so I wanted to do
-something that I found genuinely interesting but simple enough to
-bite off in an evening or weekend. Chat servers are well known
-problems, there's nothing new here, but they are complex enough to
-have fun with!
+something that I found genuinely interesting but simple enough to bite
+off in an evening or weekend. Chat servers are well known problems,
+there's nothing new here, but they are still complex enough to have fun
+with!
+
+The first implementation was JavaScript, but since I was cutting my
+teeth on new (to me) technologies, I re-wrote it in CoffeeScript and
+killed two birds with one stone.
+
+The JavaScript branch still lives in GitHub, but any new changes
+will bee in CoffeeScript on the master branch.
 
 
 License
