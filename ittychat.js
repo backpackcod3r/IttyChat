@@ -223,7 +223,7 @@ IttyChat = {
                 Clients.notifyAuthedExcept(client, client.name + " has joined.");
             }
         } else {
-            client.notify("You're already logged in! Type /q to quit.");
+            client.notify("You're already logged in!");
         }
     },
 
@@ -362,7 +362,7 @@ IttyChat = {
         client = new Client(socket);
         Clients.addClient(client);
 
-        client.sendWelcome(client);
+        client.sendWelcome();
 
         util.log("Connection from " + client.toString() +
                  " (clients: " + Clients.length() + ")");
