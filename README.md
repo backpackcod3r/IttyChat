@@ -27,9 +27,10 @@ you're interested in saving it
 Using the Chat
 --------------
 
-Since this is a line-oriented server, a client program such as TinyFugue[1] (or
-equivalent) is highly recommended. It makes the experience much more pleasant!
-Raw telnet works fine in a pinch, however.
+Since this is a line-oriented server, a client program such as
+[TinyFugue] (http://tinyfugue.sourceforge.net/) or an equivalent is
+highly recommended. It makes the experience much more pleasant!  Raw
+telnet works fine in a pinch, however.
 
 All user commands begin with a period, and are summarized below:
 
@@ -164,9 +165,3 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-Footnotes
----------
-
-[1] http://tinyfugue.sourceforge.net/
