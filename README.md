@@ -1,49 +1,46 @@
-Specification
-=============
+IttyChat
+========
 
 This is a proof-of-concept simple chat server that accepts Telnet
 connections and drops all connected users into a single "chat
 room". Think IRC, but much, much less useful.
 
 Running the Server
-==================
+------------------
 
 Just run with node.js and CoffeeScript as follows:
 
-  % coffee ittychat.coffee 3000
+    % coffee ittychat.coffee 3000
 
 This will start the server listening on port 3000.
 
 If you want to limit the server to listening only on localhost, use
 the "-l" argument:
 
-  % coffee ittychat.coffee -l 3000
+    % coffee ittychat.coffee -l 3000
 
 This is useful for debugging.
 
-
 Using the Chat
-==============
+--------------
 
 While a client such as TinyFugue can be used, plain ol' telnet works
-fine. Just telnet to the chat server's address and port, and you're connected.
+fine. Just telnet to the chat server's address and port, and you're
+connected. All Commands begin with a period.
 
-
-Commands begin with a period.
-
-.who
+### .who
 
   Print a list of all the userse in the chat.
 
-.connect <username>
+### .connect [username]
 
   Join the chat with the given username.
 
-.quit
+### .quit
 
   Leave the chat and disconnect.
 
-.me <msg>
+### .me [msg]
 
   Pose command. Displays your username followed by the message.  For
   example, if your name is "JimBob":
@@ -56,7 +53,7 @@ Commands begin with a period.
 
   to all the users in the chat.
 
-.say <msg>
+### .say [msg]
 
   Speak the given message to the room. For example, if your name is
   "JimBob":
@@ -72,13 +69,12 @@ Commands begin with a period.
   Additionally, any input that is NOT prefixed with a slash will be assumed
   to be the '.say' command.
 
-.nick <newname>
+### .nick [newname]
 
   Will change your nickname from your current name to the new name.
 
-
 TODO
-====
+----
 
 * Unit Testing. This really should have come first!
 
@@ -100,7 +96,7 @@ TODO
 
 
 Design Philosophy
-=================
+-----------------
 
 My goal with this project, first and foremost, was to learn Node.js.
 This is my first attempt at a project in Node.js, so I wanted to do
@@ -111,16 +107,16 @@ with!
 
 The first implementation was JavaScript, but since I was cutting my
 teeth on new (to me) technologies, I re-wrote it in CoffeeScript and
-killed two birds with one stone.
+killed mtwo birds with one stone.
 
 The JavaScript branch still lives in GitHub, but any new changes
 will bee in CoffeeScript on the master branch.
 
 
 License
-=======
+-------
 
-Copyright (c) 2012 Seth J. Morabito <web@loomcom.com>
+Copyright (c) 2012 Seth J. Morabito &lt;web@loomcom.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
