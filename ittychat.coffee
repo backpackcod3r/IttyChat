@@ -73,10 +73,6 @@ class Client
   @notifyAuthed: (msg) ->
     client.notify msg for client in @authedClients()
 
-  # Notify all authenticated users, except one.
-  @notifyAuthedExcept: (exceptClient, msg) ->
-    client.notify msg for client in @authedClients() when client isnt exceptClient
-
   # Return the set of all clients that are authenticated.
   @authedClients: ->
     (client for client in @clients when client.isAuthenticated)
@@ -120,11 +116,15 @@ class Client
     oldName = @name
     @name = newName
     @notify "Changing user name to #{@name}"
-    Client.notifyAuthedExcept this, "#{oldName} is now known as #{newName}"
+    @notifyOthers "#{oldName} is now known as #{newName}"
 
   # Print a Welcome Message to the client.
   sendWelcome: ->
     @sendFile "welcome.txt", "Welcome to IttyChat!\r\nPlease configure your welcome message in welcome.txt!"
+
+  # Notify all authenticated users, except this one.
+  notifyOthers: (msg) ->
+    client.notify msg for client in Client.authedClients() when client isnt this
 
   # Print the help file
   sendHelp: ->
@@ -156,7 +156,7 @@ class Client
     @name = name
     @notify "Welcome to the chat, #{@name}!"
     @sendMotd()
-    Client.notifyAuthedExcept this, "#{@name} has joined."
+    @notifyOthers "#{@name} has joined."
 
   # Write a prompt to the client (not currently used)
   prompt: ->
@@ -308,7 +308,7 @@ IttyChat =
     if client?
       Client.removeClient client
       if client.isAuthenticated
-        Client.notifyAuthedExcept client, "#{client.name} has left the chat"
+        client.notifyOthers "#{client.name} has left the chat"
       util.log "Disconnect from #{client} [c:#{Client.count()}]"
 
 
