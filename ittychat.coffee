@@ -37,56 +37,6 @@ Array::remove = (e) ->
     @splice(i, 1)
 
 #
-# The Set of All Clients, and functions to operate on the set.
-#
-Clients =
-  # The set of all clients
-  clients: new Array()
-
-  # Find a client by its socket
-  addClient: (client) ->
-    @clients.push(client)
-
-  # Adds a client to the collection
-  findClient: (socket) ->
-    for client in @clients
-      return client if socket is client.socket
-
-  # Removes the specified client from the collection
-  removeClient: (client) ->
-    @clients.remove(client)
-
-  # Notify all users (authed or not)
-  notifyAll: (msg) ->
-    client.notify msg for client in @clients
-
-  # Notify all authenticated users.
-  notifyAuthed: (msg) ->
-    client.notify msg for client in @authedClients()
-
-  # Notify all authenticated users, except one.
-  notifyAuthedExcept: (exceptClient, msg) ->
-    client.notify msg for client in @authedClients() when client isnt exceptClient
-
-  # Return the set of all clients that are authenticated.
-  authedClients: ->
-    (client for client in @clients when client.isAuthenticated)
-
-  # Returns true if the user name is in use, false otherwise.
-  nameIsInUse: (name) ->
-    foundIt = false
-    for client in @clients
-      foundIt = true if client.name? and name? and client.name.toLowerCase() is name.toLowerCase()
-    foundIt
-
-  noAuthedClients: ->
-    true if @authedClients().length is 0
-
-  # Return the number of clients (authed and unauthed)
-  length: ->
-    @clients.length
-
-#
 # A Client is a socket, and some associated metadata.
 #   - name: The client's display name.
 #   - connectedAt: When the socket first connected.
@@ -94,6 +44,62 @@ Clients =
 #   - address: The IP address of the client.
 #
 class Client
+
+  #
+  # Class properties
+  #
+
+  # The set of all clients
+  @clients: new Array()
+
+  # Find a client by its socket
+  @addClient: (client) ->
+    @clients.push(client)
+
+  # Adds a client to the collection
+  @findClient: (socket) ->
+    for client in @clients
+      return client if socket is client.socket
+
+  # Removes the specified client from the collection
+  @removeClient: (client) ->
+    @clients.remove(client)
+
+  # Notify all users (authed or not)
+  @notifyAll: (msg) ->
+    client.notify msg for client in @clients
+
+  # Notify all authenticated users.
+  @notifyAuthed: (msg) ->
+    client.notify msg for client in @authedClients()
+
+  # Notify all authenticated users, except one.
+  @notifyAuthedExcept: (exceptClient, msg) ->
+    client.notify msg for client in @authedClients() when client isnt exceptClient
+
+  # Return the set of all clients that are authenticated.
+  @authedClients: ->
+    (client for client in @clients when client.isAuthenticated)
+
+  # Returns true if the user name is in use, false otherwise.
+  @nameIsInUse: (name) ->
+    foundIt = false
+    for client in @clients
+      foundIt = true if client.name? and name? and client.name.toLowerCase() is name.toLowerCase()
+    foundIt
+
+  @noAuthedClients: ->
+    true if @authedClients().length is 0
+
+  # Return the number of clients (authed and unauthed)
+  @count: ->
+    @clients.length
+
+
+  #
+  # Instance Properties
+  #
+
   constructor: (@socket) ->
     @name = null
     @connectedAt = Date.now()
@@ -114,7 +120,7 @@ class Client
     oldName = @name
     @name = newName
     @notify "Changing user name to #{@name}"
-    Clients.notifyAuthedExcept this, "#{oldName} is now known as #{newName}"
+    Client.notifyAuthedExcept this, "#{oldName} is now known as #{newName}"
 
   # Print a Welcome Message to the client.
   sendWelcome: ->
@@ -150,7 +156,7 @@ class Client
     @name = name
     @notify "Welcome to the chat, #{@name}!"
     @sendMotd()
-    Clients.notifyAuthedExcept this, "#{@name} has joined."
+    Client.notifyAuthedExcept this, "#{@name} has joined."
 
   # Write a prompt to the client (not currently used)
   prompt: ->
@@ -187,7 +193,7 @@ IttyChat =
   cmdSay: (client, msg) ->
     # TODO: Clean up input, handle non-printables, etc.
     if client.isAuthenticated
-      Clients.notifyAuthed "[#{client.name}]: #{msg}" if msg? and msg.length > 0
+      Client.notifyAuthed "[#{client.name}]: #{msg}" if msg? and msg.length > 0
     else
       client.notify "Please log in."
 
@@ -201,7 +207,7 @@ IttyChat =
     else
       if name.length is 0
         client.notify "Please provide a valid name."
-      else if Clients.nameIsInUse(name)
+      else if Client.nameIsInUse(name)
         client.notify "That name is already taken!"
       else
         client.authenticate(name)
@@ -215,7 +221,7 @@ IttyChat =
         client.notify "Please provide a valid name."
       else if client.name is name
         client.notify "Uh... OK?"
-      else if (client.name.toLowerCase() is not name.toLowerCase()) and Clients.nameIsInUse(name)
+      else if (client.name.toLowerCase() is not name.toLowerCase()) and Client.nameIsInUse(name)
         # The 'toLowerCase' check is a speciaql case to bypass
         # "name is in use" check when a user simply wants to
         # change capitalization of his or her own nick, i.e.,
@@ -230,11 +236,11 @@ IttyChat =
   # Handle the 'who' command.
   #
   cmdWho: (client) ->
-    if Clients.noAuthedClients()
+    if Client.noAuthedClients()
       client.notify "No one is connected."
     else
       client.notify "The following users are connected:"
-      for c in Clients.authedClients()
+      for c in Client.authedClients()
         client.notify "    #{c.name}"
 
   #
@@ -242,7 +248,7 @@ IttyChat =
   #
   cmdMe: (client, msg) ->
     if client.isAuthenticated
-      Clients.notifyAuthed("* #{client.name} #{msg}") if msg? and msg.length > 0
+      Client.notifyAuthed("* #{client.name} #{msg}") if msg? and msg.length > 0
     else
       client.notify "You must be logged in to do that!"
 
@@ -292,25 +298,25 @@ IttyChat =
   # Handle receiving a SIGINT or SIGKILL
   signalHandler: ->
     util.log "Cleaning up..."
-    Clients.notifyAll "System going down RIGHT NOW!\r\n"
+    Client.notifyAll "System going down RIGHT NOW!\r\n"
     util.log "Bye!"
     process.exit 0
 
   # Handle a socket 'end' event
   endHandler: (socket) ->
-    client = Clients.findClient(socket)
+    client = Client.findClient(socket)
     if client?
-      Clients.removeClient client
+      Client.removeClient client
       if client.isAuthenticated
-        Clients.notifyAuthedExcept client, "#{client.name} has left the chat"
-      util.log "Disconnect from #{client} [c:#{Clients.length()}]"
+        Client.notifyAuthedExcept client, "#{client.name} has left the chat"
+      util.log "Disconnect from #{client} [c:#{Client.count()}]"
 
 
   clientListener: (socket) ->
     client = new Client(socket)
-    Clients.addClient(client)
+    Client.addClient(client)
 
-    util.log "Connection from #{client} [c:#{Clients.length()}]"
+    util.log "Connection from #{client} [c:#{Client.count()}]"
 
     client.sendWelcome()
 
