@@ -30,8 +30,10 @@ net = require 'net'
 fs = require 'fs'
 path = require 'path'
 
+#
 # Add a 'remove' method to array to mask the unpleasantness of
 # splicing
+#
 Array::remove = (e) ->
   while ((i = @indexOf(e)) > -1)
     @splice(i, 1)
@@ -168,6 +170,12 @@ class Client
 #
 IttyChat =
 
+  # Max string length of 1024 characters (UTF-8, so they may in fact
+  # be multibyte)
+  MAX_INPUT_LENGTH: 1024
+
+  MAX_NAME_LENGTH: 16
+
   #
   # Handle the 'quit' command.
   #
@@ -191,22 +199,28 @@ IttyChat =
   # Handle the 'say' command.
   #
   cmdSay: (client, msg) ->
-    # TODO: Clean up input, handle non-printables, etc.
     if client.isAuthenticated
       Client.notifyAuthed "[#{client.name}]: #{msg}" if msg? and msg.length > 0
     else
       client.notify "Please log in."
 
   #
+  # Returns true  if the name is invalid.
+  #
+  isInvalidName: (name) ->
+    name.search(/[^\w-|]+/g) > 0 or
+      name.length > @MAX_NAME_LENGTH or
+      name.length is 0
+
+  #
   # Handle the 'connect' command.
   #
   cmdConnect: (client, name) ->
-    # TODO: Reject invalid names
     if client.isAuthenticated
       client.notify "You're already logged in!"
     else
-      if name.length is 0
-        client.notify "Please provide a valid name."
+      if @isInvalidName(name)
+        client.notify "That is not a valid name, sorry."
       else if Client.nameIsInUse(name)
         client.notify "That name is already taken!"
       else
@@ -217,8 +231,8 @@ IttyChat =
   #
   cmdNick: (client, name) ->
     if client.isAuthenticated
-      if name.length is 0
-        client.notify "Please provide a valid name."
+      if @isInvalidName(name)
+        client.notify "That is not a valid name, sorry."
       else if client.name is name
         client.notify "Uh... OK?"
       else if (client.name.toLowerCase() is not name.toLowerCase()) and Client.nameIsInUse(name)
@@ -253,6 +267,21 @@ IttyChat =
       client.notify "You must be logged in to do that!"
 
   #
+  # Take raw data received from a socket and scrub it
+  # of non-printable characters. Returns the scrubbed string.
+  #
+  cleanInput: (str) ->
+    # Remove leading and trailing whitespace, and
+    # truncate to our max_length
+    cleanedInput = str.substring(0, @MAX_INPUT_LENGTH)
+
+    # Remove all control characters. These are conveniently located in
+    # the first two pages of the ASCII/UTF8 character space
+    cleanedInput = cleanedInput.replace /[\u0000-\u001f\u007f]/g, ''
+
+    cleanedInput.trim()
+
+  #
   # Receive input from the client, and act on it.
   #
   # TODO: This works for the simplest case, but is very fragile. It
@@ -261,12 +290,12 @@ IttyChat =
   #       chunked? What about buffered input?
   #
   inputHandler: (client, data) ->
-    rawInput = String(data).trim()
+    cleanedInput = IttyChat.cleanInput(data)
 
-    if rawInput.length > 0
-      util.log "[#{client.address}]: #{rawInput}"
+    if cleanedInput.length > 0
+      util.log "[#{client.address}]: #{cleanedInput}"
 
-      match = rawInput.match /^\.(\w*)\s*(.*)/
+      match = cleanedInput.match /^\.(\w*)\s*(.*)/
 
       if match?
         command = match[1]
@@ -292,7 +321,7 @@ IttyChat =
           client.notify "Huh?"
 
       else
-        IttyChat.cmdSay client, rawInput
+        IttyChat.cmdSay client, cleanedInput
 
 
   # Handle receiving a SIGINT or SIGKILL
@@ -313,6 +342,9 @@ IttyChat =
 
 
   clientListener: (socket) ->
+    # Handle all strings internally as UTF-8.
+    socket.setEncoding('utf8')
+
     client = new Client(socket)
     Client.addClient(client)
 

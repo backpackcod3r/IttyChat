@@ -3,6 +3,9 @@ The following commands may be used when NOT in the chat:
 
   .connect <nickname>     Join the chat with name <nickname>
 
+User names must be 16 characters or less, and cannot
+contain spaces.
+
 These commands may be used at any time:
 
   .who                    See who is online
