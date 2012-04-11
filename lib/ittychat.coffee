@@ -30,6 +30,12 @@ net = require 'net'
 fs = require 'fs'
 path = require 'path'
 
+# Max string length of 1024 characters (UTF-8, so they may in fact
+# be multibyte)
+MAX_INPUT_LENGTH: 1024
+
+MAX_NAME_LENGTH: 16
+
 #
 # Add a 'remove' method to array to mask the unpleasantness of
 # splicing
@@ -142,10 +148,11 @@ class Client
     #       Make sure that the file we're sending is relative to the
     #       current working directory, and has no '..' elements.
     client = this
-    fs.readFile path.join(__dirname, fileName), (err, data) ->
+    name = path.join(__dirname, '..', 'etc', fileName)
+    fs.readFile name, (err, data) ->
       if err?
         if err.code is 'ENOENT'
-          util.log "#{fileName} was requested, but is missing (or unreadable)"
+          util.log "#{name} was requested, but is missing (or unreadable)"
           client.notify defaultText if defaultText?
         else
           raise err
@@ -165,40 +172,30 @@ class Client
     @socket.write @name if @isAuthenticated
     @socket.write "> "
 
-#
-# The Chat Server
-#
-IttyChat =
-
-  # Max string length of 1024 characters (UTF-8, so they may in fact
-  # be multibyte)
-  MAX_INPUT_LENGTH: 1024
-
-  MAX_NAME_LENGTH: 16
-
+class IttyChat
   #
   # Handle the 'quit' command.
   #
-  cmdQuit: (client) ->
+  @cmdQuit: (client) ->
     # Just call end, and let the event handler take care of cleanup.
     client.socket.end()
 
   #
   # Handle the 'help' command.
   #
-  cmdHelp: (client) ->
+  @cmdHelp: (client) ->
     client.sendHelp()
 
   #
   # Handle the 'motd' command.
   #
-  cmdMotd: (client) ->
+  @cmdMotd: (client) ->
     client.sendMotd()
 
   #
   # Handle the 'say' command.
   #
-  cmdSay: (client, msg) ->
+  @cmdSay: (client, msg) ->
     if client.isAuthenticated
       Client.notifyAuthed "[#{client.name}]: #{msg}" if msg? and msg.length > 0
     else
@@ -207,7 +204,7 @@ IttyChat =
   #
   # Returns true  if the name is invalid.
   #
-  isInvalidName: (name) ->
+  @isInvalidName: (name) ->
     name.search(/[^\w-|]+/g) > 0 or
       name.length > @MAX_NAME_LENGTH or
       name.length is 0
@@ -215,7 +212,7 @@ IttyChat =
   #
   # Handle the 'connect' command.
   #
-  cmdConnect: (client, name) ->
+  @cmdConnect: (client, name) ->
     if client.isAuthenticated
       client.notify "You're already logged in!"
     else
@@ -229,7 +226,7 @@ IttyChat =
   #
   # Handle the 'nick' command.
   #
-  cmdNick: (client, name) ->
+  @cmdNick: (client, name) ->
     if client.isAuthenticated
       if @isInvalidName(name)
         client.notify "That is not a valid name, sorry."
@@ -249,7 +246,7 @@ IttyChat =
   #
   # Handle the 'who' command.
   #
-  cmdWho: (client) ->
+  @cmdWho: (client) ->
     if Client.noAuthedClients()
       client.notify "No one is connected."
     else
@@ -260,7 +257,7 @@ IttyChat =
   #
   # Handle the 'me' command
   #
-  cmdMe: (client, msg) ->
+  @cmdMe: (client, msg) ->
     if client.isAuthenticated
       Client.notifyAuthed("* #{client.name} #{msg}") if msg? and msg.length > 0
     else
@@ -270,7 +267,7 @@ IttyChat =
   # Take raw data received from a socket and scrub it
   # of non-printable characters. Returns the scrubbed string.
   #
-  cleanInput: (str) ->
+  @cleanInput: (str) ->
     # Remove leading and trailing whitespace, and
     # truncate to our max_length
     cleanedInput = str.substring(0, @MAX_INPUT_LENGTH)
@@ -289,7 +286,7 @@ IttyChat =
   #       terminated string. What about very long input? Is it
   #       chunked? What about buffered input?
   #
-  inputHandler: (client, data) ->
+  @inputHandler: (client, data) ->
     cleanedInput = IttyChat.cleanInput(data)
 
     if cleanedInput.length > 0
@@ -323,16 +320,15 @@ IttyChat =
       else
         IttyChat.cmdSay client, cleanedInput
 
-
   # Handle receiving a SIGINT or SIGKILL
-  signalHandler: ->
+  @signalHandler: ->
     util.log "Cleaning up..."
     Client.notifyAll "System going down RIGHT NOW!\r\n"
     util.log "Bye!"
     process.exit 0
 
   # Handle a socket 'end' event
-  endHandler: (socket) ->
+  @endHandler: (socket) ->
     client = Client.findClient(socket)
     if client?
       Client.removeClient client
@@ -341,7 +337,7 @@ IttyChat =
       util.log "Disconnect from #{client} [c:#{Client.count()}]"
 
 
-  clientListener: (socket) ->
+  @clientListener: (socket) ->
     # Handle all strings internally as UTF-8.
     socket.setEncoding('utf8')
 
@@ -358,40 +354,12 @@ IttyChat =
     socket.on 'end', ->
       IttyChat.endHandler(socket)
 
-#
-# Main
-#
-
-process.on 'SIGINT', IttyChat.signalHandler
-process.on 'SIGKILL', IttyChat.signalHandler
-
-args = process.argv.splice(2)
-
-if args.length < 1 or args.length > 2
-  console.log "Usage: coffee ittychat.coffee [-l] <port>"
-
-#
-# See if we want to bind to localhost only
-#
-localOnly = false
-for arg in args
-  localOnly = true if arg is "-l"
-
-port = parseInt args.pop()
-
-if port > 1024
-  server = net.createServer IttyChat.clientListener
-
-  # TODO: IPv6, etc.
-  if localOnly
-    addr = '127.0.0.1'
-  else
-    addr = '0.0.0.0'
-
-  server.listen port, addr, ->
-    util.log "Now listening on #{server.address().address}:#{server.address().port}"
+  @createServer: (address, port) ->
+    process.on 'SIGINT', @signalHandler
+    process.on 'SIGKILL', @signalHandler
+    server = net.createServer @clientListener
+    server.listen port, address, ->
+      util.log "Now listening on #{server.address().address}:#{server.address().port}"
 
 
-else
-  console.log "Port must be > 1024"
-  process.exit 1
+module.exports = IttyChat
