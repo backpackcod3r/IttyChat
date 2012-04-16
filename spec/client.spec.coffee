@@ -258,7 +258,7 @@ describe "A Client Instance", ->
     expect(joe).toBeNotified /alice has joined/i
 
     for client in others
-      expect(client.socket.notifications.length).toEqual 0
+      expect(client).not.toBeNotified /alice has joined/i
 
   it "should notify self when changing names", ->
     @unauthedClient.authenticate "OldName"
@@ -304,9 +304,9 @@ describe "A Client Instance", ->
     alice.authenticate "Alice"
     joe.changeName "JoeBobBriggs"
 
-    expect(joe.socket.notifications.length).toEqual 3
-    expect(alice.socket.notifications.length).toEqual 2
+    expect(alice).toBeNotified /OldName is now known as JoeBobBriggs/
+    expect(joe).not.toBeNotified /OldName is now known as JoeBobBriggs/
 
     for client in others
-      expect(client.socket.notifications.length).toEqual 0
+      expect(client).not.toBeNotified /OldName is now known as JoeBobBriggs/
 
