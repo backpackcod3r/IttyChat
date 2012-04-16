@@ -1,28 +1,30 @@
 IttyChat
 ========
 
-This is a very simple proof-of-concept chat server that accepts Telnet
-connections and drops all connected users into a single "chat room". Think IRC,
-but much, much less useful.
+This is a simple chat server that accepts Telnet connections and drops
+all connected users into a single "chat room". Think IRC, but much,
+much less useful.
+
 
 Running the Server
 ------------------
 
 Just run with node.js and CoffeeScript as follows:
 
-    % coffee ittychat.coffee 3000
+    % coffee server.coffee 3000
 
 This will start the server listening on port 3000.
 
 If you want to limit the server to listening only on localhost, use
-the "-l" argument:
+the `-l` argument:
 
-    % coffee ittychat.coffee -l 3000
+    % coffee server.coffee -l 3000
 
 This is useful for debugging, kicking the tires, etc.
 
-Logging is written to STDOUT, so you'll want to redirect to a log file if
-you're interested in saving it
+Logging is written to STDOUT, so you'll want to redirect to a log file
+if you're interested in saving it
+
 
 Using the Chat
 --------------
@@ -34,55 +36,60 @@ telnet works fine in a pinch, however.
 
 All user commands begin with a period, and are summarized below:
 
-### .who
+### .help
 
-  Print a list of all the userse in the chat.
-
-### .connect [username]
-
-  Join the chat with the given username.
+Display a help file.
 
 ### .quit
 
-  Leave the chat and disconnect.
+Leave the chat and disconnect.
 
-### .me [msg]
+### .who
 
-  Pose command. Displays your username followed by the message.  For
-  example, if your name is "JimBob":
+Print a list of all the userse in the chat.
 
-    '.me slaps himself with a fish'
+### .connect [username]
 
-  Will display
-
-    '* JimBob slaps himself with a fish'
-
-  to all the users in the chat.
-
-### .say [msg]
-
-  Speak the given message to the room. For example, if your name is
-  "JimBob":
-
-    '.say Hello!'
-
-  Will display
-
-    '[JimBob]: Hello!'
-
-  to all the users in the chat.
-
-  Additionally, any input that is NOT prefixed with a slash will be assumed
-  to be the '.say' command.
+Join the chat with the given username.
 
 ### .nick [newname]
 
-  Will change your nickname from your current name to the new name.
+Will change your nickname from your current name to the new name.
+
+### .say [msg]
+
+Speak the given message to the room. For example, if your name is
+"JimBob":
+
+    .say Hello!
+
+Will display
+
+    [JimBob]: Hello!
+
+to all the users in the chat.
+
+Additionally, any input that is NOT prefixed with a slash will be
+assumed to be the `.say` command.
+
+### .me [msg]
+
+Pose command. Displays your username followed by the message.  For
+example, if your name is "JimBob":
+
+    .me slaps himself with a fish
+
+Will display
+
+    * JimBob slaps himself with a fish
+
+to all the users in the chat.
+
 
 Customizing the Server
 ---------------------
 
-The following files can be customized:
+The following files in the `etc` directory can be customized:
 
 ### welcome.txt
 
@@ -102,24 +109,38 @@ This is the text displayed by the .help command. You probably don't
 need to edit this file unless you hack on the server and add, delete,
 or modify commands.
 
+Testing
+-------
+
+IttyChat makes use of [Jasmine] (http://pivotal.github.com/jasmine/)
+for test coverage. All specs are in the `IttyChat/spec` directory. You
+can optionally install the `jasmine-node` package with npm:
+
+    % npm install -g jasmine-node
+
+Then, to run the specs, you simply need to do the following:
+
+    % jasmine-node --coffee --verbose ./spec
+
+
 TODO
 ----
 
-* Unit Testing. This really should have come first!
+* Deal with idle sockets?
 
-* Deal with idle sockets.
-
-* Deal with chunked input.
+* Deal with chunked input?
 
 * Allow a 'max_clients' variable to be set.
 
 * SSL connections.
 
 * Authentication
-  - Shared password for connections?
-    - Would require a single variable to set the secret.
-  - Per-user password hash for connections?
-    - Would require a simple file store for user / crypted pass
+
+  - Shared password for connections? (would require a single variable
+    to set the secret)
+
+  - Per-user password hash for connections? (would require a simple
+    store for user / crypted pass)
 
 * Multiple chat rooms
 
@@ -127,7 +148,7 @@ TODO
 Design Philosophy
 -----------------
 
-My goal with this project, first and foremost, was to learn Node.js.
+My goal with this project was, first and foremost, to learn Node.js.
 This is my first attempt at a project in Node.js, so I wanted to do
 something that I found genuinely interesting but simple enough to bite
 off in an evening or weekend. Chat servers are well known problems,
