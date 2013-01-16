@@ -1,0 +1,23 @@
+{
+  "author": "Seth Morabito <web@loomcom.com> (http://www.loomcom.com/)",
+  "name": "IttyChat",
+  "description": "IttyChat Chat Server",
+  "version": "0.2.0",
+  "homepage": "http://www.loomcom.com/ittychat",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/sethm/IttyChat.git"
+  },
+  "main": "server.coffee",
+  "scripts": {
+    "test": "jasmine-node --coffee --verbose ./spec"
+  },
+  "dependencies": {
+    "jasmine-node": ">= 1.0.20"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}

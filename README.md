@@ -116,7 +116,8 @@ IttyChat makes use of [Jasmine] (http://pivotal.github.com/jasmine/)
 for test coverage. All specs are in the `IttyChat/spec` directory. You
 can optionally install the `jasmine-node` package with npm:
 
-    % npm install -g jasmine-node
+    % npm install
+    % npm test
 
 Then, to run the specs, you simply need to do the following:
 
