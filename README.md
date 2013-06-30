@@ -11,22 +11,30 @@ Users are persistent and stored in a SQLite database between sessions.
 Running the Server
 ------------------
 
-Just run with node.js and CoffeeScript as follows:
+It's easiest to use `npm` to run the server. First install dependencies with:
 
-    % coffee server.coffee 3000
+    % npm install -g coffee-script
+    % npm install
+
+Then run the server. By default, this will listen on all interfaces,
+on the default port, 8888:
+
+    % npm start
+
+If you'd prefer to launch the server manually, use the command:
+
+    % coffee ittychat.coffee 3000
 
 This will start the server listening on port 3000.
 
 If you want to limit the server to listening only on localhost, use
 the `-l` argument:
 
-    % coffee server.coffee -l 3000
+    % coffee ittychat.coffee -l 3000
 
 This is useful for debugging, kicking the tires, etc.
 
-Logging is written to STDOUT, so you'll want to redirect to a log file
-if you're interested in saving it
-
+Logs are stored in the directory `logs`.
 
 Using the Chat
 --------------
