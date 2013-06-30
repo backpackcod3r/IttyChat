@@ -1,5 +1,6 @@
-ittychat = require('./lib/ittychat')
+Server = require('./lib/server')
 util = require 'util'
+sqlite3 = require 'sqlite3'
 
 args = process.argv.splice(2)
 
@@ -23,7 +24,8 @@ if port > 1024
   else
     addr = '0.0.0.0'
 
-  ittychat.createServer addr, port
+  ittychat = new Server(addr, port)
+  ittychat.start()
 
 else
   console.log "Port must be > 1024"

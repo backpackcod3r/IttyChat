@@ -5,6 +5,8 @@ This is a simple chat server that accepts Telnet connections and drops
 all connected users into a single "chat room". Think IRC, but much,
 much less useful.
 
+Users are persistent and stored in a SQLite database between sessions.
+
 
 Running the Server
 ------------------
@@ -48,9 +50,14 @@ Leave the chat and disconnect.
 
 Print a list of all the userse in the chat.
 
-### .connect [username]
+### .register [username] [password] [email]
 
-Join the chat with the given username.
+Register a new user. Username, password, and email address are all
+required.
+
+### .connect [username] [password]
+
+Join the chat as a previously registered user.
 
 ### .nick [newname]
 
@@ -112,17 +119,16 @@ or modify commands.
 Testing
 -------
 
-IttyChat makes use of [Jasmine] (http://pivotal.github.com/jasmine/)
-for test coverage. All specs are in the `IttyChat/spec` directory. You
-can optionally install the `jasmine-node` package with npm:
+IttyChat makes use of [Mocha] (http://visionmedia.github.io/mocha/)
+for test coverage. All specs are in the `IttyChat/test` directory. You
+can optionally install the `mocha` package and test with npm:
 
     % npm install
     % npm test
 
-Then, to run the specs, you simply need to do the following:
+If you prefer to run the mocha command by hand,
 
-    % jasmine-node --coffee --verbose ./spec
-
+    % ITTYCHAT_ENV=test mocha -s 250 --compilers coffee:coffee-script
 
 TODO
 ----
@@ -135,15 +141,7 @@ TODO
 
 * SSL connections.
 
-* Authentication
-
-  - Shared password for connections? (would require a single variable
-    to set the secret)
-
-  - Per-user password hash for connections? (would require a simple
-    store for user / crypted pass)
-
-* Multiple chat rooms
+* Multiple chat rooms.
 
 
 Design Philosophy
@@ -167,7 +165,7 @@ will bee in CoffeeScript on the master branch.
 License
 -------
 
-Copyright (c) 2012 Seth J. Morabito &lt;web@loomcom.com&gt;
+Copyright (c) 2013 Seth J. Morabito &lt;web@loomcom.com&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

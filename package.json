@@ -2,7 +2,7 @@
   "author": "Seth Morabito <web@loomcom.com> (http://www.loomcom.com/)",
   "name": "IttyChat",
   "description": "IttyChat Chat Server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "homepage": "http://www.loomcom.com/ittychat",
   "repository": {
     "type": "git",
@@ -10,13 +10,22 @@
   },
   "main": "server.coffee",
   "scripts": {
-    "test": "jasmine-node --coffee --verbose ./spec"
+    "start": "coffee ittychat.coffee 8888",
+    "test": "ITTYCHAT_ENV=test mocha -s 250 --compilers coffee:coffee-script"
   },
   "dependencies": {
-    "jasmine-node": ">= 1.0.20"
+    "sqlite3": ">= 2.1.7",
+    "bcrypt": ">= 0.7.5",
+    "sequelize": ">= 1.6.0",
+    "winston": ">= 0.7.1",
+    "coffee-script": "~1.6.2"
   },
   "devDependencies": {},
-  "optionalDependencies": {},
+  "optionalDependencies": {
+    "mocha": ">= 1.9.0",
+    "should": ">= 1.2.2",
+    "sinon": ">= 1.7.2"
+  },
   "engines": {
     "node": "*"
   }
