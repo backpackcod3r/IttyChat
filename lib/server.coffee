@@ -31,7 +31,7 @@ fs     = require 'fs'
 bcrypt = require 'bcrypt'
 config = require __dirname + '/../config'
 Client = require __dirname + '/client'
-models = require __dirname + '/models/index'
+models = require __dirname + '/models'
 
 class Server
 
@@ -93,7 +93,7 @@ class Server
     client.sendWelcome()
 
     socket.on 'data', (data) =>
-      client.handleInput @cleanInput(data)
+      client.parseAndExecute @cleanInput(data)
 
     socket.on 'end', =>
       @endHandler(socket)

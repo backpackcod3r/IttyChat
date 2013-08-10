@@ -44,59 +44,64 @@ Since this is a line-oriented server, a client program such as
 highly recommended. It makes the experience much more pleasant!  Raw
 telnet works fine in a pinch, however.
 
-All user commands begin with a period, and are summarized below:
+Each line must begin with a recognized command:
 
-### .help
+### help
 
 Display a help file.
 
-### .quit
+### quit
 
 Leave the chat and disconnect.
 
-### .who
+### who
 
 Print a list of all the userse in the chat.
 
-### .register [username] [password] [email]
+### register [username] [password] [email]
 
 Register a new user. Username, password, and email address are all
 required.
 
-### .connect [username] [password]
+### connect [username] [password]
 
 Join the chat as a previously registered user.
 
-### .nick [newname]
+### nick [newname]
 
 Will change your nickname from your current name to the new name.
 
-### .say [msg]
+### say [msg] (or "[msg])
 
 Speak the given message to the room. For example, if your name is
 "JimBob":
 
-    .say Hello!
+    say Hello!
+
+or, equivalently
+
+    "Hello!
 
 Will display
 
-    [JimBob]: Hello!
+    JimBob says "Hello!"
 
 to all the users in the chat.
 
-Additionally, any input that is NOT prefixed with a slash will be
-assumed to be the `.say` command.
-
-### .me [msg]
+### me [msg]
 
 Pose command. Displays your username followed by the message.  For
 example, if your name is "JimBob":
 
-    .me slaps himself with a fish
+    me slaps himself with a fish
+
+or, equivalently
+
+    :slaps himself with a fish
 
 Will display
 
-    * JimBob slaps himself with a fish
+    JimBob slaps himself with a fish
 
 to all the users in the chat.
 

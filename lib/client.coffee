@@ -13,7 +13,7 @@ fs     = require 'fs'
 util   = require 'util'
 path   = require 'path'
 bcrypt = require 'bcrypt'
-models = require __dirname + '/models/index'
+models = require __dirname + '/models'
 config = require __dirname + '/../config'
 
 #
@@ -30,16 +30,25 @@ commands = (() ->
     client.socket.end()
 
   register: (client, args) =>
-    client.register args[0], args[1], args[2], (error) ->
-      client.notify error if error?
+    if args.length == 3
+      client.register args[0], args[1], args[2], (error) ->
+        client.notify error if error?
+    else
+      client.notify "Try: register <name> <password> <email>"
 
   connect: (client, args) =>
-    client.authenticate args[0], args[1], (error, user) ->
-      client.notify error if error?
+    if args.length == 2
+      client.authenticate args[0], args[1], (error, user) ->
+        client.notify error if error?
+    else
+      client.notify "Try: connect <name> <password>"
 
   nick: (client, args) =>
-    client.changeName args[0], (error, user) ->
-      client.notify error if error?
+    if args.length == 1
+      client.changeName args[0], (error, user) ->
+        client.notify error if error?
+    else
+      client.notify "Try: nick <newname>"
 
   who: (client, args) =>
     if Client.authedClients().length is 0
@@ -49,19 +58,19 @@ commands = (() ->
       for c in Client.authedClients()
         client.notify "    #{c.name()}"
 
-  me: (client, args) =>
-    msg = args and args[0]
+  emote: (client, args) =>
+    msg = args[0]
 
     if client.isAuthenticated()
-      Client.notifyAuthed("* #{client.name()} #{msg}") if msg? and msg.length > 0
+      Client.notifyAuthed("#{client.name()} #{msg}") if msg? and msg.length > 0
     else
       client.notify "You must be logged in to do that!"
 
   say: (client, args) =>
-    msg = args and args[0]
+    msg = args[0]
 
     if client.isAuthenticated()
-      Client.notifyAuthed "[#{client.name()}]: #{msg}" if msg? and msg.length > 0
+      Client.notifyAuthed "#{client.name()} says \"#{msg}\"" if msg? and msg.length > 0
     else
       client.notify "Please log in."
 
@@ -72,40 +81,53 @@ commands = (() ->
     client.sendFile "motd.txt"
 )()
 
+
 class Client
 
   @MAX_NAME_LENGTH: 16
 
   #
+  # Returns a command in the form [verb, args], where the args is an array
+  # of zero or more command arguments.
+  #
+  # TODO: This does not account for quoted args like: 'foo "bar baz" quux'. It should.
+  #
+  parseCommand: (input) =>
+    config.logger.info "[#{@address}]: #{input}"
+
+    # In keeping with tradition, there are two 'special cases',
+    # the verb " (single quotes) and the verb : (colon). These will
+    # be mapped to 'say' and 'emote', respectively.
+
+    if input[0] == "\""
+      ["say", [input[1..-1]]]
+    else if input[0] == ":"
+      ["emote", [input[1..-1]]]
+    else
+      # Attempt to match at least one word (the verb), followed
+      # by an optional whitespace and "the rest", which is split into
+      # words.
+      match = input.match /^\s*([^\s]+)\s*(.*)/
+      if match
+        command = match[1]
+        args = (match[2] and match[2].split(/\s/)) or []
+        [command, args]
+      else
+        [null,[]]
+  #
   # Receive input from the client, and act on it.
   #
-  # TODO = This works for the simplest case, but is very fragile. It
-  #       assumes all input comes from the client as a single CR/LF
-  #       terminated string. What about very long input? Is it
-  #       chunked? What about buffered input?
-  #
+  parseAndExecute: (input) =>
+    command = @parseCommand(input)
+    verb = command[0]
+    args = command[1]
 
-  handleInput: (input) =>
+    f = commands[verb]
 
-    if input.length > 0
-      config.logger.info "[#{@address}]: #{input}"
-
-      match = input.match /^\.(\w*)\s*(.*)/
-
-      if match?
-        command = match[1]
-        args = match[2] && match[2].split(/\s+/)
-
-        f = commands[command]
-        if f
-          f(@, args)
-        else
-          @notify "Huh?"
-
-      else
-        f = commands['say']
-        f @, [input]
-
+    if f
+      f(@, args)
+    else
+      @notify "Huh?"
 
   #
   # Class properties
@@ -138,12 +160,6 @@ class Client
   # Return the set of all clients that are authenticated.
   @authedClients: ->
     (client for client in @clients when client.isAuthenticated())
-
-  # Determines whether a name is in use by a user in the database.
-  # TODO: This really seems like it should be on User, not on Client.
-  @isNameInUse: (name, callback) ->
-    models.User.find(where: {name: name}).success (user) =>
-      callback(user?)
 
   # Return the number of clients (authed and unauthed)
   @count: ->
@@ -276,8 +292,8 @@ class Client
     else if not @isValidName(newName)
       callback "That is not a valid name, sorry.", @
     else
-      Client.isNameInUse newName, (inUse) =>
-        if inUse and @name().toLowerCase() isnt newName.toLowerCase()
+      models.User.isNameAvailable newName, (isAvailable) =>
+        if not isAvailable and @name().toLowerCase() isnt newName.toLowerCase()
           # The 'toLowerCase' check is a special case to bypass
           # "name is in use" check when a user simply wants to
           # change capitalization of his or her own nick, i.e.,

@@ -11,7 +11,7 @@
   "main": "server.coffee",
   "scripts": {
     "start": "coffee ittychat.coffee 8888",
-    "test": "ITTYCHAT_ENV=test mocha -s 250 --compilers coffee:coffee-script"
+    "test": "ITTYCHAT_ENV=test mocha -s 1000 --reporter spec --compilers coffee:coffee-script"
   },
   "dependencies": {
     "sqlite3": ">= 2.1.7",

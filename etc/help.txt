@@ -1,22 +1,25 @@
 ------------------------------------------------------------------------
 The following commands may be used when NOT in the chat:
 
-  .connect <nickname>     Join the chat with name <nickname>
+  register
+  connect
 
 User names must be 16 characters or less, and cannot
 contain spaces.
 
 These commands may be used at any time:
 
-  .who                    See who is online
-  .quit                   Quit
+  who                    See who is online
+  quit                   Quit
 
 These commands may only be used after you have joined the chat:
 
-  .motd                   See the "Message of the Day"
-  .me <text>              Emote/pose a line of text
-  .say <text>             Say a line of text
-  .nick <newnick>         Change your nickname
-  .quit                   Quit (leave the chat)
-  .help                   This help message
+  motd                   See the "Message of the Day"
+  say <text>             Say a line of text
+  "<text>                Short alias for 'say'
+  me <text>              Emote/pose a line of text
+  :<text>                Short alias for 'me'
+  nick <newnick>         Change your nickname
+  quit                   Quit (leave the chat)
+  help                   This help message
 ------------------------------------------------------------------------

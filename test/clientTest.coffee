@@ -1,48 +1,12 @@
-Client = require '../lib/client'
-models = require '../lib/models/index'
-bcrypt = require 'bcrypt'
-util = require 'util'
-should = require 'should'
-sinon = require 'sinon'
-fs = require 'fs'
-path = require 'path'
+util       = require 'util'
+should     = require 'should'
+sinon      = require 'sinon'
+fs         = require 'fs'
+path       = require 'path'
 
-#
-# A stub for net.Socket, so we can inspect calls.
-#
-class SocketStub
-  constructor: (@remoteAddress) ->
-    @bytesWritten = 0
-    @notifications = new Array()
-
-  write: (string) ->
-    @bytesWritten += string.length
-    @notifications.push string
-
-  close: () ->
-
-  # Return true if the socket has received the specified message.
-  # If message is a string, it must be a full, exact match for one
-  # of the received messages. If the message argument is a RegExp,
-  # it must match one of the received messages.
-  hasReceived: (msg) ->
-    @notifications.some (notification) ->
-      if msg instanceof RegExp
-        notification.match(msg)
-      else
-        notification is msg
-
-class UserBuilder
-  @create = (name, email, password, callback) =>
-    salt = bcrypt.genSaltSync()
-    hash = bcrypt.hashSync(password, salt)
-    user = models.User.build name: name, cryptedPassword: hash, email: email
-    user.save().success (user) ->
-      callback(user)
-
-class ClientBuilder
-  @create = (ipAddress) ->
-    new Client(new SocketStub(ipAddress))
+Client     = require __dirname + '/../lib/client'
+models     = require __dirname + '/../lib/models'
+testHelper = require __dirname + '/testHelper'
 
 # Intercept calls to 'fs.readFile' for testing.
 sinon.stub(fs, 'readFile')
@@ -66,12 +30,12 @@ describe 'Clients', ->
 
     it 'should increment the count when adding a client', ->
       oldCount = Client.count()
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       Client.addClient(client)
       Client.count().should.eql oldCount + 1
 
     it 'should be able to find a client by socket', ->
-      socket = new SocketStub('192.168.1.1')
+      socket = new testHelper.SocketStub('192.168.1.1')
       client = new Client(socket)
 
       Client.addClient(client)
@@ -80,8 +44,8 @@ describe 'Clients', ->
     it 'should be able to remove a client', ->
       Client.count().should.eql 0
 
-      client1 = ClientBuilder.create '192.168.1.1'
-      client2 = ClientBuilder.create '192.168.1.2'
+      client1 = testHelper.ClientBuilder.create '192.168.1.1'
+      client2 = testHelper.ClientBuilder.create '192.168.1.2'
 
       Client.addClient(client1)
       Client.addClient(client2)
@@ -92,10 +56,10 @@ describe 'Clients', ->
 
 
     it 'should notify both authenticated and unauthenticated clients with notifyAll', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
 
-        authedClient = ClientBuilder.create '192.168.1.1'
-        unauthedClient = ClientBuilder.create '192.168.1.2'
+        authedClient = testHelper.ClientBuilder.create '192.168.1.1'
+        unauthedClient = testHelper.ClientBuilder.create '192.168.1.2'
 
         authedClient.authenticate 'joeBob', 'foo5bar', (client) ->
           authedClient.isAuthenticated().should.be.true
@@ -113,10 +77,10 @@ describe 'Clients', ->
           done()
 
     it 'should notify only authenticated clients with notifyAuthed', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
 
-        authedClient = ClientBuilder.create '192.168.1.1'
-        unauthedClient = ClientBuilder.create '192.168.1.2'
+        authedClient = testHelper.ClientBuilder.create '192.168.1.1'
+        unauthedClient = testHelper.ClientBuilder.create '192.168.1.2'
 
         authedClient.authenticate 'joeBob', 'foo5bar', (client) ->
           authedClient.isAuthenticated().should.be.true
@@ -134,14 +98,14 @@ describe 'Clients', ->
           done()
 
     it 'should increment the count of clients when adding one', ->
-      client = ClientBuilder.create('192.168.1.1')
+      client = testHelper.ClientBuilder.create('192.168.1.1')
 
       oldCount = Client.count()
       Client.addClient(client)
       Client.count().should.eql(oldCount + 1)
 
     it 'should decrement the count of clients when removing one', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
 
       Client.addClient(client)
       oldCount = Client.count()
@@ -149,10 +113,10 @@ describe 'Clients', ->
       Client.count().should.eql(oldCount - 1)
 
     it 'should give access to the set of authed clients', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
 
-        authedClient = ClientBuilder.create '192.168.1.1'
-        unauthedClient = ClientBuilder.create '192.168.1.2'
+        authedClient = testHelper.ClientBuilder.create '192.168.1.1'
+        unauthedClient = testHelper.ClientBuilder.create '192.168.1.2'
 
         authedClient.authenticate 'joeBob', 'foo5bar', (client) ->
           authedClient.isAuthenticated().should.be.true
@@ -165,23 +129,9 @@ describe 'Clients', ->
 
           done()
 
-    it 'should be able to tell whether a user name is available', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-
-        Client.isNameInUse 'noSuchUser', (inUse) ->
-          inUse.should.be.false
-          done()
-
-    it 'should be able to tell whether a user name is in use', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-
-        Client.isNameInUse 'joeBob', (inUse) ->
-          inUse.should.be.true
-          done()
-
   describe 'Client Registration', ->
     it 'should create a new User model on registration', (done) ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
 
       models.User.count().success (beforeCount) ->
         client.register 'joeBob', 'foo5bar', 'joebob@example.com', (err, client) ->
@@ -190,8 +140,8 @@ describe 'Clients', ->
             done()
 
     it 'should be able to change its name', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-        client = ClientBuilder.create('192.168.1.1')
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+        client = testHelper.ClientBuilder.create('192.168.1.1')
         client.authenticate 'joeBob', 'foo5bar', (error, client) ->
           client.name().should.eql 'joeBob'
           client.changeName 'billyBob', (error, client) ->
@@ -199,8 +149,8 @@ describe 'Clients', ->
             done()
 
     it 'should not be able to change its name to an invalid name', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-        client = ClientBuilder.create('192.168.1.1')
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+        client = testHelper.ClientBuilder.create('192.168.1.1')
         client.authenticate 'joeBob', 'foo5bar', (error, client) ->
           client.name().should.eql 'joeBob'
           # Spaces aren't allowed
@@ -210,21 +160,21 @@ describe 'Clients', ->
             done()
 
     it 'should save its new name in the database when changing', (done) ->
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-        client = ClientBuilder.create('192.168.1.1')
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+        client = testHelper.ClientBuilder.create('192.168.1.1')
         client.authenticate 'joeBob', 'foo5bar', (error, client) ->
           client.name().should.eql 'joeBob'
           client.changeName 'billyBob', (error, client) ->
             should.not.exist(error)
             should.exist(client)
-            Client.isNameInUse 'billyBob', (isInUse) ->
-              isInUse.should.be.true
+            models.User.isNameAvailable 'billyBob', (isAvailable) ->
+              isAvailable.should.be.false
               done()
 
     it 'should should not allow a name change to something already in use', (done) ->
-      UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
-        UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
-          client = ClientBuilder.create('192.168.1.1')
+      testHelper.UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
+        testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+          client = testHelper.ClientBuilder.create('192.168.1.1')
           client.authenticate 'joeBob', 'foo5bar', (error, client) ->
             client.name().should.eql 'joeBob'
             client.changeName 'billyBob', (error, client) ->
@@ -233,11 +183,11 @@ describe 'Clients', ->
               done()
 
     it 'should be able to connect only once with the same name', (done) ->
-      client1 = ClientBuilder.create '192.168.1.1'
-      client2 = ClientBuilder.create '192.168.1.2'
+      client1 = testHelper.ClientBuilder.create '192.168.1.1'
+      client2 = testHelper.ClientBuilder.create '192.168.1.2'
       Client.addClient(client1)
       Client.addClient(client2)
-      UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
+      testHelper.UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
         client1.authenticate 'billyBob', 'foo5bar', (error, client) ->
           should.not.exist(error)
           should.exist(client)
@@ -250,12 +200,12 @@ describe 'Clients', ->
             done()
 
     it 'should allow multiple users with different names', (done) ->
-      client1 = ClientBuilder.create '192.168.1.1'
-      client2 = ClientBuilder.create '192.168.1.2'
+      client1 = testHelper.ClientBuilder.create '192.168.1.1'
+      client2 = testHelper.ClientBuilder.create '192.168.1.2'
       Client.addClient(client1)
       Client.addClient(client2)
-      UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
-        UserBuilder.create 'joeBob', 'joeBob@example.com', 'bar5foo', (user) ->
+      testHelper.UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
+        testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'bar5foo', (user) ->
           client1.authenticate 'billyBob', 'foo5bar', (error, client) ->
             should.not.exist(error)
             should.exist(client)
@@ -269,58 +219,59 @@ describe 'Clients', ->
   describe 'A Client', ->
 
     it "should write to client socket", ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.notify('1234')
       client.socket.hasReceived("1234\r\n").should.be.true
 
     it 'should not be authenticated when created', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.isAuthenticated().should.be.false
 
     it 'should not validate a name over 16 characters long', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.isValidName('foobarfoobarfoob').should.be.true
       client.isValidName('foobarfoobarfooba').should.be.false
 
     it 'should not validate a name with spaces in it', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.isValidName('foo bar').should.be.false
 
     it 'should have a socket', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.should.have.property('socket')
 
     it "should get socket's remote address", ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       client.address.should.eql(client.socket.remoteAddress)
 
     it 'should have no name if not authenticated', ->
-      client = ClientBuilder.create '192.168.1.1'
+      client = testHelper.ClientBuilder.create '192.168.1.1'
       should.not.exist(client.name())
 
     it 'should have a name if authenticated', (done) ->
-      client = ClientBuilder.create '192.168.1.1'
-      UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
+      client = testHelper.ClientBuilder.create '192.168.1.1'
+      testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'foo5bar', (user) ->
         client.authenticate 'joeBob', 'foo5bar', (error, client) ->
           client.name().should.eql 'joeBob'
           done()
 
-    it 'should be able to get a list of connected users with .who', (done) ->
-      billyBob = ClientBuilder.create '192.168.1.1'
-      joeBob = ClientBuilder.create '192.168.1.2'
-      jimBob = ClientBuilder.create '192.168.1.2'
+    it 'should be able to get a list of connected users', (done) ->
+      billyBob = testHelper.ClientBuilder.create '192.168.1.1'
+      joeBob = testHelper.ClientBuilder.create '192.168.1.2'
+      jimBob = testHelper.ClientBuilder.create '192.168.1.2'
       Client.addClient(billyBob)
       Client.addClient(joeBob)
       Client.addClient(jimBob)
 
-      UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
-        UserBuilder.create 'joeBob', 'joeBob@example.com', 'bar5foo', (user) ->
-          UserBuilder.create 'jimBob', 'jimBob@example.com', 'foobar5', (user) ->
+      testHelper.UserBuilder.create 'billyBob', 'billyBob@example.com', 'foo5bar', (user) ->
+        testHelper.UserBuilder.create 'joeBob', 'joeBob@example.com', 'bar5foo', (user) ->
+          testHelper.UserBuilder.create 'jimBob', 'jimBob@example.com', 'foobar5', (user) ->
             billyBob.authenticate 'billyBob', 'foo5bar', (error, client) ->
               joeBob.authenticate 'joeBob', 'bar5foo', (error, client) ->
                 jimBob.authenticate 'jimBob', 'foobar5', (error, client) ->
 
-                  joeBob.handleInput('.who\r\n')
+                  joeBob.parseAndExecute('who\r\n')
+
                   joeBob.socket.hasReceived("The following users are connected:\r\n").should.be.true
                   joeBob.socket.hasReceived("    billyBob\r\n").should.be.true
                   joeBob.socket.hasReceived("    jimBob\r\n").should.be.true
