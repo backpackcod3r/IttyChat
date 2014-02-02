@@ -2,10 +2,10 @@
 +----------------------------------------------------------------------+
 | Welcome to IttyChat!                                                 |
 |                                                                      |
-|              To Register: register <username> <password> <email>    |
-|               To Connect: connect <username> <password>             |
-|           To Peek Inside: who                                       |
-|                  To Quit: quit                                      |
-|              To Get Help: help                                      |
+|              To Register: register <username> <password> <email>     |
+|               To Connect: connect <username> <password>              |
+|           To Peek Inside: who                                        |
+|                  To Quit: quit                                       |
+|              To Get Help: help                                       |
 |                                                                      |
 +----------------------------------------------------------------------+
