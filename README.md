@@ -132,7 +132,7 @@ or modify commands.
 Testing
 -------
 
-IttyChat makes use of [Mocha] (http://visionmedia.github.io/mocha/)
+IttyChat makes use of [Mocha] (http://mochajs.org/)
 for test coverage. All specs are in the `IttyChat/test` directory. You
 can optionally install the `mocha` package and test with npm:
 
